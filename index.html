@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f4f4">
+<title>游乐园 ♥ 调查表</title>
+<style>
+  :root{
+    --ink:#3a3a3a;
+    --ink2:#5d5d5d;
+    --gray:#8f8f8f;
+    --gray2:#bdbdbd;
+    --line:#d2d2d2;
+    --rose:#d4758f;
+    --rose-d:#b95c76;
+    --paper:#fffefe;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC",SimSun,serif;
+    color:var(--ink);
+    background-color:#f2f2f2;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(130,130,130,.16) 0 12px, rgba(255,255,255,0) 12px 26px),
+      repeating-linear-gradient(90deg, rgba(130,130,130,.16) 0 12px, rgba(255,255,255,0) 12px 26px);
+    min-height:100vh;
+    padding:0 12px 70px;
+  }
+
+  /* ---------- 顶部状态条 ---------- */
+  .bar{
+    max-width:880px;margin:0 auto;padding:13px 4px 10px;
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    font-size:12.5px;font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#6a6a6a;
+  }
+  .bar .row1{display:flex;align-items:center;gap:9px;flex:1 1 auto;min-width:0}
+  .bar .row2{display:flex;gap:8px;flex:0 0 auto}
+  .bar span#status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dot{width:8px;height:8px;border-radius:50%;background:#c9c9c9;flex:0 0 auto}
+  .dot.on{background:#5aa469;box-shadow:0 0 0 3px rgba(90,164,105,.18)}
+  .dot.warn{background:#d0a24a}
+  .dot.bad{background:#c2606a}
+  .bar .room{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;
+    background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#555;
+  }
+  .bar button{
+    font:inherit;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;
+    border:1px solid #9c9c9c;background:#fff;color:#4a4a4a;
+  }
+  .bar button:hover{background:#f3f3f3}
+  .bar .sp{flex:1}
+
+  /* ---------- 纸张 ---------- */
+  .paper{
+    position:relative;max-width:880px;margin:26px auto 0;
+    background:var(--paper);
+    border:2px solid #9a9a9a;border-radius:14px;
+    box-shadow:0 16px 36px rgba(0,0,0,.10);
+    padding:0 30px 26px;
+  }
+
+  /* 绶带 */
+  .ribbon{
+    position:absolute;left:50%;top:-46px;transform:translateX(-50%);
+    width:min(58%,420px);min-width:250px;
+    background:linear-gradient(180deg,#b3b3b3,#8e8e8e);
+    color:#fff;text-align:center;padding:12px 16px 24px;
+    clip-path:polygon(0 0,100% 0,100% 84%,50% 100%,0 84%);
+    box-shadow:0 6px 14px rgba(0,0,0,.14);
+    z-index:2;
+  }
+  .ribbon .script{
+    font-family:"Snell Roundhand","Segoe Script","Brush Script MT","Apple Chancery",cursive;
+    font-size:clamp(20px,3.4vw,30px);line-height:1.1;letter-spacing:.02em;
+    text-shadow:0 1px 0 rgba(0,0,0,.12);
+  }
+  .ribbon .cn{
+    font-size:clamp(15px,2.4vw,20px);letter-spacing:.34em;margin-top:6px;
+    padding-left:.34em;font-weight:600;
+  }
+  .ribbon .cn .hh{color:#ffd7e2;letter-spacing:0;margin:0 2px}
+
+  /* 头部 */
+  .head{
+    display:grid;grid-template-columns:150px 1fr 150px;gap:18px;align-items:center;
+    padding-top:112px;
+  }
+  .photo{
+    position:relative;width:150px;height:186px;background:#a5a5a5;
+    clip-path:polygon(26% 0,74% 0,100% 20%,100% 80%,74% 100%,26% 100%,0 80%,0 20%);
+  }
+  .photo::before{
+    content:"";position:absolute;inset:2px;background:#fff;clip-path:inherit;
+  }
+  .photo span{
+    position:absolute;inset:0;display:grid;place-items:center;
+    font-size:12px;color:#b0b0b0;letter-spacing:.2em;
+    font-family:system-ui,"PingFang SC",sans-serif;
+  }
+  .photo.you{background:#6f6f6f}
+  .photo.you span{color:#c8c8c8}
+
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px}
+  .grp{display:flex;flex-direction:column;gap:11px;min-width:0}
+  .gtag{font-size:11px;letter-spacing:.2em}
+  .frow{display:flex;align-items:flex-end;gap:8px;font-size:16px}
+  .frow .k{flex:0 0 auto;letter-spacing:.1em;color:var(--ink2)}
+  .frow .v{flex:1;position:relative}
+  .frow input{
+    width:100%;border:0;border-bottom:1.4px dashed #a8a8a8;background:transparent;
+    font:inherit;font-size:16px;color:var(--ink);padding:2px 4px 3px;outline:none;text-align:center;
+  }
+  .frow input:focus{border-bottom-color:#555}
+  .frow .ro{
+    display:block;text-align:center;border-bottom:1.4px dashed #c8c8c8;
+    padding:2px 4px 3px;min-height:25px;color:var(--rose-d);font-size:16px;
+  }
+  .frow .ro:empty::before{content:"—";color:#dcdcdc}
+
+  .whoTag{
+    display:inline-block;font-size:11px;letter-spacing:.18em;padding:2px 9px;border-radius:99px;
+    font-family:system-ui,"PingFang SC",sans-serif;
+  }
+  .whoTag.you{background:#3f3f3f;color:#fff}
+  .whoTag.peer{background:var(--rose);color:#fff}
+
+  @media (max-width:720px){
+    .bar{padding:10px 2px 6px;gap:7px}
+    .bar .row1{flex:1 1 100%}
+    .bar .row2{flex:1 1 100%}
+    .bar .row2 button{flex:1 1 0;white-space:nowrap;font-size:12px;padding:7px 2px}
+    .bar .room{font-size:11px;letter-spacing:.06em;padding:2px 6px}
+    .paper{margin-top:32px}
+    .head{grid-template-columns:1fr;padding-top:96px;gap:10px}
+    .photo{display:none}
+    .fields{grid-template-columns:1fr 1fr;gap:4px 16px}
+    .grp{gap:9px}
+    .frow{font-size:14.5px}
+    .frow input,.frow .ro{font-size:14.5px}
+  }
+
+  /* 分隔线 */
+  .rule{
+    display:flex;align-items:center;gap:10px;margin:26px 0 20px;color:var(--gray);
+  }
+  .rule::before,.rule::after{content:"";height:1.4px;background:#bcbcbc;flex:1;position:relative}
+  .rule i{width:7px;height:7px;border:1.4px solid #9a9a9a;transform:rotate(45deg);display:block}
+
+  h2.list{
+    text-align:center;font-size:clamp(19px,3.2vw,26px);letter-spacing:.16em;
+    font-weight:600;margin:0 0 18px;color:#4a4a4a;
+    font-family:Georgia,"Songti SC",serif;
+  }
+
+  /* ---------- 清单 ---------- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 46px;position:relative}
+  .cols::before{
+    content:"";position:absolute;left:50%;top:2px;bottom:2px;
+    border-left:1.4px dashed #c8c8c8;
+  }
+  .sec{margin-bottom:22px;break-inside:avoid}
+  .sec-t{
+    font-size:14px;letter-spacing:.14em;color:#555;margin:0 0 8px;
+    display:flex;align-items:center;gap:7px;
+  }
+  .sec-t::before{content:"·";font-size:18px;line-height:1;color:#8a8a8a}
+  .sec-t.right{justify-content:flex-end}
+  .sec-t.right::before{order:2}
+
+  .row{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:5.5px 0;font-size:14.5px;line-height:1.5;color:#3f3f3f;
+  }
+  .row .txt{flex:1;letter-spacing:.02em}
+  .row .txt em{font-style:normal;color:#9a9a9a;font-size:12px;margin-right:6px}
+  .box{
+    flex:0 0 auto;width:20px;height:20px;margin-top:3px;padding:0;
+    border:1.4px solid #9a9a9a;border-radius:2px;background:#fff;
+    display:grid;place-items:center;cursor:pointer;transition:background .12s,border-color .12s;
+  }
+  .box::after{
+    content:"";width:9px;height:5px;margin-top:-2px;
+    border-left:1.7px solid #fff;border-bottom:1.7px solid #fff;
+    transform:rotate(-45deg);opacity:0;transition:opacity .1s;
+  }
+  .box.me{background:#3f3f3f;border-color:#3f3f3f}
+  .box.peer{background:var(--rose);border-color:var(--rose)}
+  .box.me::after,.box.peer::after{opacity:1}
+  .box.both{
+    background:linear-gradient(135deg,#3f3f3f 0 50%,var(--rose) 50% 100%);
+    border-color:#8a7078;
+  }
+  .box.both::after{opacity:1}
+
+  @media (max-width:720px){
+    .paper{padding:0 16px 22px}
+    .cols{grid-template-columns:1fr;gap:0}
+    .cols::before{display:none}
+    .row{font-size:14px}
+  }
+
+  /* ---------- 问答 ---------- */
+  .asks{margin-top:26px;padding-top:18px;border-top:2px solid #e0e0e0}
+  .ask{margin-bottom:16px}
+  .ask .q{font-size:14.5px;color:#4a4a4a;margin-bottom:7px;letter-spacing:.03em}
+  .ask .lines{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px}
+  .ask .ln{display:flex;gap:8px;align-items:flex-end;font-size:14px}
+  .ask .ln b{
+    font-weight:600;color:#fff;background:#3f3f3f;font-size:11px;
+    padding:1px 7px;border-radius:99px;font-family:system-ui,sans-serif;letter-spacing:.1em;
+    margin-bottom:3px;
+  }
+  .ask .ln.peer b{background:var(--rose)}
+  .ask input{
+    flex:1;border:0;border-bottom:1.3px dashed #b4b4b4;background:transparent;
+    font:inherit;font-size:14px;color:#333;padding:3px 4px;outline:none;min-width:0;
+  }
+  .ask input:focus{border-bottom-color:#555}
+  .ask .ro{
+    flex:1;border-bottom:1.3px dashed #c8c8c8;padding:3px 4px;min-height:24px;
+    color:var(--rose-d);font-size:14px;word-break:break-word;
+  }
+  .ask .ro:empty::before{content:"—";color:#dcdcdc}
+  @media (max-width:620px){
+    .ask .lines{grid-template-columns:1fr;gap:6px}
+  }
+
+  /* ---------- 结果 ---------- */
+  .result{
+    margin-top:28px;border:1.6px solid #b6b6b6;border-radius:12px;
+    padding:18px 18px 16px;background:#fbfbfb;
+  }
+  .result h3{
+    margin:0 0 14px;font-size:16px;letter-spacing:.2em;color:#4a4a4a;font-weight:600;
+    display:flex;align-items:center;gap:10px;
+  }
+  .result h3::after{content:"";flex:1;height:1.3px;background:#d5d5d5}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .stats div{
+    text-align:center;background:#fff;border:1.3px solid #dcdcdc;border-radius:9px;padding:10px 4px;
+  }
+  .stats b{display:block;font-size:24px;line-height:1.1;font-family:Georgia,serif;color:#3f3f3f}
+  .stats span{display:block;font-size:11px;color:#8a8a8a;margin-top:5px;letter-spacing:.04em}
+  .stats div.both b{color:#b0435f}
+  .stats div.pme b{color:#3f3f3f}
+  .stats div.ppeer b{color:var(--rose)}
+  .stats div.none b{color:#b5b5b5}
+
+  .ratio{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-size:12.5px;color:#7a7a7a}
+  .ratio .track{flex:1;height:9px;border-radius:99px;background:#e6e6e6;overflow:hidden;display:flex}
+  .ratio .track i{display:block;height:100%}
+  .ratio .track i.b{background:#b0435f}
+  .ratio .track i.m{background:#6f6f6f}
+  .ratio .track i.p{background:var(--rose)}
+
+  .hitlist{display:flex;flex-wrap:wrap;gap:6px}
+  .hitlist span{
+    font-size:12px;background:#fff;border:1px solid #dcdcdc;border-radius:99px;
+    padding:3px 10px;color:#555;
+  }
+  .hitlist.peer span{border-color:#f0cdd6;color:var(--rose-d);background:#fff7f9}
+  .hitlist .none{color:#b0b0b0;border-style:dashed}
+  .sub{font-size:12px;color:#9a9a9a;margin:14px 0 7px;letter-spacing:.1em}
+
+  @media (max-width:520px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+  }
+
+  .foot{
+    text-align:center;font-size:11px;color:#a8a8a8;margin-top:20px;letter-spacing:.1em;
+    font-family:system-ui,"PingFang SC",sans-serif;
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+    background:#3f3f3f;color:#fff;font-size:13px;padding:10px 18px;border-radius:8px;
+    font-family:system-ui,"PingFang SC",sans-serif;letter-spacing:.02em;
+    opacity:0;pointer-events:none;transition:.24s;z-index:99;
+    box-shadow:0 10px 24px rgba(0,0,0,.24);
+  }
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  .hint{
+    max-width:880px;margin:14px auto 0;font-size:12.5px;line-height:1.7;color:#7d7d7d;
+    background:#fffdf5;border:1px solid #e8e0c8;border-radius:9px;padding:12px 14px;
+    font-family:system-ui,"PingFang SC",sans-serif;
+  }
+  .hint b{color:#a06a2a;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="row1">
+    <span class="dot" id="dot"></span>
+    <span id="status">正在连接…</span>
+    <span class="sp"></span>
+    <span class="room" id="room">房间 —</span>
+  </div>
+  <div class="row2">
+    <button id="btnLink">复制邀请链接</button>
+    <button id="btnCopy">复制我的答案</button>
+    <button id="btnClear">清空我的</button>
+  </div>
+</div>
+
+<div class="paper">
+  <div class="ribbon">
+    <div class="script">Amusement<br>Park Date</div>
+    <div class="cn">游乐园 <span class="hh">♥</span> 调查表</div>
+  </div>
+
+  <div class="head">
+    <div class="photo you"><span>你</span></div>
+    <div class="fields" id="fields"></div>
+    <div class="photo"><span>TA</span></div>
+  </div>
+
+  <div class="rule"><i></i></div>
+  <h2 class="list">RELATIONSHIP CHECKLIST</h2>
+
+  <div class="cols">
+    <div class="col" id="colL"></div>
+    <div class="col" id="colR"></div>
+  </div>
+
+  <div class="asks" id="asks"></div>
+
+  <div class="result">
+    <h3>你们的对照</h3>
+    <div class="stats">
+      <div class="both"><b id="nBoth">0</b><span>两个人都勾了</span></div>
+      <div class="pme"><b id="nMe">0</b><span>只有你</span></div>
+      <div class="ppeer"><b id="nPeer">0</b><span>只有 TA</span></div>
+      <div class="none"><b id="nNone">0</b><span>谁都没勾</span></div>
+    </div>
+    <div class="ratio">
+      <span>默契度</span>
+      <div class="track"><i class="b" id="barB"></i><i class="m" id="barM"></i><i class="p" id="barP"></i></div>
+      <span id="ratioTxt">0%</span>
+    </div>
+    <div class="sub">两个人都勾了</div>
+    <div class="hitlist" id="hitBoth"><span class="none">还没有重合的项目</span></div>
+    <div class="sub">只有 TA 勾了</div>
+    <div class="hitlist peer" id="hitPeer"><span class="none">TA 还没开始填</span></div>
+  </div>
+
+  <div class="foot">Amusement Park Date · 两个人各自打开，勾自己那一栏</div>
+</div>
+
+<div class="hint" id="hint" style="display:none"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= 数据 ================= */
+
+var SECTIONS = [
+  { title:'关于出发', side:'l', items:[
+    '提议一起去游乐园的人',
+    '负责提前做好游玩攻略的人',
+    '前一天晚上兴奋到睡不着的人',
+    '出门前花更长时间打扮的人',
+    '提议穿情侣装去游乐园的人',
+    '会拿游乐园纸质地图的人',
+    '负责拎包或拿东西的人',
+    '一进园就迷失方向分不清路的人',
+    '排队无聊时找话题解闷的人',
+    '带了相机专门给对方拍照的人'
+  ]},
+  { title:'关于休整', side:'l', items:[
+    '最先喊饿要去吃东西的人',
+    '提出找张长椅坐下歇会的人',
+    '吃东西弄到脸上需要对方擦的人',
+    '对方双手拿满食物时帮忙喂水的人',
+    '看到园区人偶想要合影的人',
+    '害羞不敢靠近人偶被对方推过去的人',
+    '买到好吃的第一口喂给对方的人',
+    '嫌弃幼稚但还是会戴上头箍的人',
+    '给对方挑选成对小挂件的人',
+    '负责掏钱买单的人',
+    '指挥对方摆姿势拍照的人',
+    '对方犹豫时直接帮对方买下来的人',
+    '对着花车上的演员挥手互动的人',
+    '走累了整个人挂在对方身上的人'
+  ]},
+  { title:'关于游乐', side:'r', items:[
+    '非要拉着对方去玩刺激项目的人',
+    '设施启动前一秒反悔想要下去的人',
+    '在刺激项目上闭眼尖叫的人',
+    '在刺激项目上全程面不改色的人',
+    '在下面帮对方拿包等待的人',
+    '遇到高空项目死活不肯玩的人',
+    '只想玩儿童设施的人',
+    '某原因坐激流勇进全身湿透的人',
+    '坐海盗船专挑两端最高处坐的人',
+    '玩碰碰车专门追着对方撞的人',
+    '玩旋转咖啡杯把盘子转飞快的人',
+    '坐旋转木马时一直看着对方的人',
+    '坐空中脚踏车时卖力蹬车的人',
+    '划脚踏船时在旁边偷懒的人',
+    '玩游戏胜负欲太强跟对方较劲的人',
+    '玩射击赢下奖品送给对方的人',
+    '在摩天轮升到最高处想接吻的人',
+    '只要与对方一起玩什么都可以的人'
+  ]},
+  { title:'关于末尾', side:'r', items:[
+    '人群拥挤时紧紧牵住对方手的人',
+    '降温时把自己外套脱给对方穿的人',
+    '对着漫天烟花认真许愿的人',
+    '烟花绽放时偷看对方侧脸的人',
+    '提出下次再一起去游乐园的人',
+    '看对方开心自己也忍不住笑的人'
+  ]}
+];
+
+var ASKS = [
+  '最喜欢的游乐项目是？',
+  '不想再体验第二次的游乐项目是？',
+  '下次还想和对方一起去的地方是？',
+  '此时此刻想与对方说的一句话是？'
+];
+
+var ITEMS = [];
+SECTIONS.forEach(function(sec, si){
+  sec.items.forEach(function(t){ ITEMS.push({ text:t, sec:si }); });
+});
+var N = ITEMS.length;
+
+/* ================= 工具 ================= */
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+var toastEl = null, toastTimer = 0;
+function toast(msg){
+  if(!toastEl){
+    toastEl = document.createElement('div');
+    toastEl.className = 'toast';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('on'); }, 2200);
+}
+
+function copyText(text){
+  return new Promise(function(resolve, reject){
+    function legacy(){
+      var ok = false;
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+      }catch(e){ ok = false; }
+      ok ? resolve() : reject(new Error('copy failed'));
+    }
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(resolve, legacy);
+    } else {
+      legacy();
+    }
+  });
+}
+
+function showText(title, text){
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:grid;place-items:center;padding:18px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;max-width:560px;width:100%;padding:16px;font-family:system-ui,"PingFang SC",sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.3)';
+  var tip = document.createElement('div');
+  tip.textContent = title + ' · 长按或全选复制';
+  tip.style.cssText = 'font-size:13px;color:#666;margin-bottom:10px';
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.readOnly = true;
+  ta.style.cssText = 'width:100%;height:170px;font-size:12.5px;line-height:1.7;border:1px solid #ddd;border-radius:8px;padding:9px;font-family:ui-monospace,Menlo,monospace;color:#333;resize:none';
+  var btn = document.createElement('button');
+  btn.textContent = '关闭';
+  btn.style.cssText = 'margin-top:12px;padding:8px 20px;border:1px solid #9a9a9a;background:#fff;border-radius:8px;font-size:13px;cursor:pointer';
+  btn.onclick = function(){ document.body.removeChild(wrap); };
+  wrap.onclick = function(e){ if(e.target === wrap) document.body.removeChild(wrap); };
+  box.appendChild(tip);
+  box.appendChild(ta);
+  box.appendChild(btn);
+  wrap.appendChild(box);
+  document.body.appendChild(wrap);
+  setTimeout(function(){ ta.focus(); ta.select(); }, 60);
+}
+
+function packBits(arr){
+  var bytes = new Uint8Array(Math.ceil(arr.length / 8));
+  for(var i=0;i<arr.length;i++){ if(arr[i]) bytes[i>>3] |= (1 << (7 - (i & 7))); }
+  var s = '';
+  for(var j=0;j<bytes.length;j++) s += String.fromCharCode(bytes[j]);
+  return btoa(s);
+}
+function unpackBits(str, n){
+  var out = new Array(n).fill(0);
+  if(!str) return out;
+  try{
+    var bin = atob(str);
+    for(var i=0;i<n;i++){
+      var b = bin.charCodeAt(i>>3) || 0;
+      out[i] = (b >> (7 - (i & 7))) & 1;
+    }
+  }catch(e){}
+  return out;
+}
+
+/* ================= 极简 MQTT over WebSocket ================= */
+
+var enc = new TextEncoder();
+var dec = new TextDecoder();
+
+function cat(list){
+  var len = 0, i;
+  for(i=0;i<list.length;i++) len += list[i].length;
+  var out = new Uint8Array(len), o = 0;
+  for(i=0;i<list.length;i++){ out.set(list[i], o); o += list[i].length; }
+  return out;
+}
+function encStr(s){
+  var b = enc.encode(s);
+  var head = new Uint8Array(2);
+  head[0] = (b.length >> 8) & 255;
+  head[1] = b.length & 255;
+  return cat([head, b]);
+}
+function encLen(len){
+  var out = [];
+  do {
+    var d = len % 128;
+    len = Math.floor(len / 128);
+    if(len > 0) d |= 128;
+    out.push(d);
+  } while(len > 0);
+  return new Uint8Array(out);
+}
+
+function MqttClient(url, clientId){
+  this.url = url;
+  this.clientId = clientId;
+  this.ws = null;
+  this.buf = new Uint8Array(0);
+  this.connected = false;
+  this.closed = false;
+  this.onConnect = null;
+  this.onMessage = null;
+  this.onClose = null;
+}
+
+MqttClient.prototype.open = function(){
+  var self = this;
+  var ws;
+  try { ws = new WebSocket(this.url, 'mqtt'); }
+  catch(e){ this.dead(); return; }
+  ws.binaryType = 'arraybuffer';
+  this.ws = ws;
+  ws.onopen = function(){ self.raw(self.connectPacket()); };
+  ws.onmessage = function(ev){ self.feed(new Uint8Array(ev.data)); };
+  ws.onerror = function(){ self.dead(); };
+  ws.onclose = function(){ self.dead(); };
+};
+
+MqttClient.prototype.dead = function(){
+  if(this.closed) return;
+  this.closed = true;
+  this.connected = false;
+  if(this.onClose) this.onClose();
+};
+
+MqttClient.prototype.close = function(){
+  this.closed = true;
+  if(this.ws){
+    try { this.ws.onclose = null; this.ws.close(); } catch(e){}
+  }
+};
+
+MqttClient.prototype.raw = function(bytes){
+  if(this.ws && this.ws.readyState === 1) this.ws.send(bytes);
+};
+
+MqttClient.prototype.connectPacket = function(){
+  var vh = cat([encStr('MQTT'), new Uint8Array([4, 0x02, 0x00, 0x3C])]);
+  var body = cat([vh, encStr(this.clientId)]);
+  return cat([new Uint8Array([0x10]), encLen(body.length), body]);
+};
+
+MqttClient.prototype.subscribe = function(filter, pid){
+  pid = pid || 1;
+  var body = cat([new Uint8Array([(pid >> 8) & 255, pid & 255]), encStr(filter), new Uint8Array([0])]);
+  this.raw(cat([new Uint8Array([0x82]), encLen(body.length), body]));
+};
+
+MqttClient.prototype.publish = function(topic, payload, retain){
+  var body = cat([encStr(topic), enc.encode(payload)]);
+  this.raw(cat([new Uint8Array([0x30 | (retain ? 1 : 0)]), encLen(body.length), body]));
+};
+
+MqttClient.prototype.ping = function(){
+  this.raw(new Uint8Array([0xC0, 0x00]));
+};
+
+MqttClient.prototype.feed = function(chunk){
+  this.buf = cat([this.buf, chunk]);
+  for(;;){
+    if(this.buf.length < 2) return;
+    var mul = 1, len = 0, i = 1, digit;
+    do {
+      if(i >= this.buf.length) return;
+      digit = this.buf[i++];
+      len += (digit & 127) * mul;
+      mul *= 128;
+      if(mul > 2097152) { this.dead(); return; }
+    } while(digit & 128);
+    if(this.buf.length < i + len) return;
+
+    var type = this.buf[0] >> 4;
+    var flags = this.buf[0] & 15;
+    var body = this.buf.subarray(i, i + len);
+    this.buf = this.buf.subarray(i + len);
+
+    if(type === 2){
+      if(body[1] === 0){
+        this.connected = true;
+        if(this.onConnect) this.onConnect();
+      } else {
+        this.dead();
+      }
+    } else if(type === 3){
+      var qos = (flags >> 1) & 3;
+      var p = 0;
+      if(qos > 0) p += 2;
+      if(body.length < p + 2) continue;
+      var tl = (body[p] << 8) | body[p+1];
+      p += 2;
+      if(body.length < p + tl) continue;
+      var topic = dec.decode(body.subarray(p, p + tl));
+      p += tl;
+      var payload = dec.decode(body.subarray(p));
+      if(this.onMessage) this.onMessage(topic, payload);
+    }
+  }
+};
+
+/* ================= 状态 ================= */
+
+var BROKERS = [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://test.mosquitto.org:8081/mqtt'
+];
+var TOPIC_ROOT = 'datecheck/apark/v1/';
+
+function makeId(){
+  var abc = 'abcdefghijkmnpqrstuvwxyz23456789', s = '';
+  for(var i=0;i<10;i++) s += abc[Math.floor(Math.random()*abc.length)];
+  return s;
+}
+function makeRoom(){
+  var abc = 'abcdefghijkmnpqrstuvwxyz23456789', s = '';
+  for(var i=0;i<6;i++) s += abc[Math.floor(Math.random()*abc.length)];
+  return s;
+}
+
+/* 身份：同一台设备固定一个 id；带 ?as=xxx 可以换身份（一台电脑上模拟两个人） */
+var urlId = (location.search.match(/[?&]as=([a-z0-9]{4,16})/i) || [])[1];
+var myId = urlId ? urlId.toLowerCase() : localStorage.getItem('apark-id');
+if(!myId){ myId = makeId(); localStorage.setItem('apark-id', myId); }
+
+var room = (function(){
+  var m = (location.hash || '').match(/r=([a-z0-9]{4,12})/i);
+  if(m) return m[1].toLowerCase();
+  var r = makeRoom();
+  try { history.replaceState(null, '', '#r=' + r); }
+  catch(e){ location.hash = 'r=' + r; }
+  return r;
+})();
+
+var STORE_KEY = 'apark:' + room + ':' + myId;
+
+var me = {
+  name:'', height:'', age:'',
+  ans: new Array(N).fill(0),
+  asks: new Array(ASKS.length).fill('')
+};
+var peerId = null, peer = null, peerTs = 0;
+var mq = null, linkState = 'connecting', brokerIdx = 0;
+var boxEls = [], askInputs = [];
+
+(function loadLocal(){
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    var d = JSON.parse(raw);
+    if(d.name) me.name = d.name;
+    if(d.height) me.height = d.height;
+    if(d.age) me.age = d.age;
+    if(Array.isArray(d.ans)) me.ans = d.ans.slice(0, N).concat(new Array(Math.max(0, N - d.ans.length)).fill(0));
+    if(Array.isArray(d.asks)) for(var i=0;i<ASKS.length;i++) me.asks[i] = d.asks[i] || '';
+  }catch(e){}
+})();
+
+function saveLocal(){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      name: me.name, height: me.height, age: me.age, ans: me.ans, asks: me.asks
+    }));
+  }catch(e){}
+}
+
+/* ================= 构建 DOM ================= */
+
+$('room').textContent = '房间 ' + room.toUpperCase();
+
+(function buildFields(){
+  function row(k, inner){
+    return '<div class="frow"><span class="k">' + k + '</span><span class="v">' + inner + '</span></div>';
+  }
+  var you = '<div class="grp">' +
+      '<div class="gtag"><span class="whoTag you">你</span></div>' +
+      row('姓名', '<input id="me-name" maxlength="12" placeholder="填名字">') +
+      row('身高', '<input id="me-height" maxlength="12" placeholder="—">') +
+      row('年龄', '<input id="me-age" maxlength="12" placeholder="—">') +
+    '</div>';
+  var ta = '<div class="grp">' +
+      '<div class="gtag"><span class="whoTag peer">TA</span></div>' +
+      row('姓名', '<span class="ro" id="peer-name"></span>') +
+      row('身高', '<span class="ro" id="peer-height"></span>') +
+      row('年龄', '<span class="ro" id="peer-age"></span>') +
+    '</div>';
+  $('fields').innerHTML = you + ta;
+})();
+
+(function buildList(){
+  var left = '', right = '';
+  SECTIONS.forEach(function(sec, si){
+    var start = 0;
+    for(var k=0;k<si;k++) start += SECTIONS[k].items.length;
+    var head = '<div class="sec-t' + (sec.side === 'r' ? ' right' : '') + '">' + sec.title + '</div>';
+    var rows = '';
+    for(var i=0;i<sec.items.length;i++){
+      var idx = start + i;
+      rows += '<div class="row">' +
+              '<span class="txt">' + esc(sec.items[i]) + '</span>' +
+              '<button class="box" data-i="' + idx + '" aria-label="第' + (idx+1) + '项"></button>' +
+              '</div>';
+    }
+    var block = '<div class="sec">' + head + rows + '</div>';
+    if(sec.side === 'l') left += block; else right += block;
+  });
+  $('colL').innerHTML = left;
+  $('colR').innerHTML = right;
+  var boxes = document.querySelectorAll('.box');
+  for(var i=0;i<boxes.length;i++) boxEls[+boxes[i].dataset.i] = boxes[i];
+})();
+
+(function buildAsks(){
+  var html = '';
+  ASKS.forEach(function(q, i){
+    html += '<div class="ask"><div class="q">' + esc(q) + '</div><div class="lines">' +
+            '<div class="ln"><b>你</b><input data-ask="' + i + '" maxlength="40" placeholder="填写"></div>' +
+            '<div class="ln peer"><b>TA</b><span class="ro" data-peerasks="' + i + '"></span></div>' +
+            '</div></div>';
+  });
+  $('asks').innerHTML = html;
+  var inputs = $('asks').querySelectorAll('input[data-ask]');
+  for(var i=0;i<inputs.length;i++) askInputs[+inputs[i].dataset.ask] = inputs[i];
+})();
+
+/* ================= 渲染 ================= */
+
+function peerAns(i){
+  if(!peer || !peer.ans) return 0;
+  return peer.ans[i] ? 1 : 0;
+}
+
+function paintBoxes(){
+  for(var i=0;i<N;i++){
+    var el = boxEls[i];
+    if(!el) continue;
+    var m = !!me.ans[i], p = !!peerAns(i);
+    el.classList.toggle('me', m && !p);
+    el.classList.toggle('peer', p && !m);
+    el.classList.toggle('both', m && p);
+    el.setAttribute('aria-pressed', m ? 'true' : 'false');
+  }
+}
+
+function paintPeerProfile(){
+  $('peer-name').textContent = peer && peer.name ? peer.name : '';
+  $('peer-height').textContent = peer && peer.height ? peer.height : '';
+  $('peer-age').textContent = peer && peer.age ? peer.age : '';
+  for(var i=0;i<ASKS.length;i++){
+    var el = document.querySelector('[data-peerasks="' + i + '"]');
+    if(el) el.textContent = (peer && peer.asks && peer.asks[i]) ? peer.asks[i] : '';
+  }
+}
+
+function stats(){
+  var both = 0, onlyMe = 0, onlyPeer = 0, none = 0;
+  for(var i=0;i<N;i++){
+    var m = !!me.ans[i], p = !!peerAns(i);
+    if(m && p) both++;
+    else if(m) onlyMe++;
+    else if(p) onlyPeer++;
+    else none++;
+  }
+  return { both:both, me:onlyMe, peer:onlyPeer, none:none };
+}
+
+function paintResult(){
+  var s = stats();
+  $('nBoth').textContent = s.both;
+  $('nMe').textContent = s.me;
+  $('nPeer').textContent = s.peer;
+  $('nNone').textContent = s.none;
+
+  var union = s.both + s.me + s.peer;
+  var ratio = union ? Math.round(s.both / union * 100) : 0;
+  $('ratioTxt').textContent = ratio + '%';
+  $('barB').style.width = (s.both / N * 100) + '%';
+  $('barM').style.width = (s.me / N * 100) + '%';
+  $('barP').style.width = (s.peer / N * 100) + '%';
+
+  var both = [], onlyPeer = [];
+  for(var i=0;i<N;i++){
+    var m = !!me.ans[i], p = !!peerAns(i);
+    if(m && p) both.push(ITEMS[i].text);
+    else if(p) onlyPeer.push(ITEMS[i].text);
+  }
+  $('hitBoth').innerHTML = both.length
+    ? both.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('')
+    : '<span class="none">还没有重合的项目</span>';
+  $('hitPeer').innerHTML = onlyPeer.length
+    ? onlyPeer.slice(0, 14).map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') +
+      (onlyPeer.length > 14 ? '<span class="none">还有 ' + (onlyPeer.length - 14) + ' 项</span>' : '')
+    : '<span class="none">' + (peer ? '这一栏 TA 什么都没勾' : 'TA 还没开始填') + '</span>';
+}
+
+function paintAll(){
+  paintBoxes();
+  paintPeerProfile();
+  paintResult();
+}
+
+/* ================= 网络 ================= */
+
+function publish(force){
+  if(!mq || !mq.connected) return;
+  var payload = JSON.stringify({
+    n: me.name, h: me.height, a: me.age,
+    b: packBits(me.ans), q: me.asks, t: Date.now()
+  });
+  mq.publish(TOPIC_ROOT + room + '/s/' + myId, payload, true);
+}
+
+var pubTimer = 0;
+function schedulePublish(){
+  clearTimeout(pubTimer);
+  pubTimer = setTimeout(publish, 260);
+}
+
+function setStatus(kind, text){
+  var d = $('dot');
+  d.className = 'dot' + (kind ? ' ' + kind : '');
+  $('status').textContent = text;
+}
+
+function connectNext(){
+  if(brokerIdx >= BROKERS.length){
+    linkState = 'failed';
+    setStatus('bad', '连不上实时服务器，填的内容仍在本地保存');
+    showHint();
+    return;
+  }
+  var url = BROKERS[brokerIdx];
+  var c = new MqttClient(url, myId);
+  var settled = false;
+  var timer = setTimeout(function(){
+    if(settled) return;
+    settled = true;
+    c.close();
+    brokerIdx++;
+    connectNext();
+  }, 6000);
+
+  c.onConnect = function(){
+    if(settled) return;
+    settled = true;
+    clearTimeout(timer);
+    mq = c;
+    linkState = 'on';
+    c.subscribe(TOPIC_ROOT + room + '/s/+', 1);
+    hideHint();
+    setTimeout(function(){ publish(true); }, 120);
+    setStatus('on', '已连线');
+    clearInterval(hbTimer);
+    hbTimer = setInterval(function(){ publish(); }, 12000);
+  };
+  c.onMessage = function(topic, payload){
+    var sid = topic.slice(topic.lastIndexOf('/') + 1);
+    if(sid === myId) return;
+    var data;
+    try { data = JSON.parse(payload); } catch(e){ return; }
+    if(!data || typeof data !== 'object') return;
+    peerId = sid;
+    peer = {
+      name: data.n || '',
+      height: data.h || '',
+      age: data.a || '',
+      ans: unpackBits(data.b, N),
+      asks: Array.isArray(data.q) ? data.q : ['','','','']
+    };
+    peerTs = Date.now();
+    paintAll();
+    paintPresence();
+  };
+  c.onClose = function(){
+    if(settled) return;
+    settled = true;
+    clearTimeout(timer);
+    brokerIdx++;
+    connectNext();
+  };
+  setStatus('', '正在连接 ' + (brokerIdx + 1) + '/' + BROKERS.length + '…');
+  c.open();
+}
+
+var hbTimer = 0, presenceTimer = 0;
+
+function paintPresence(){
+  if(linkState !== 'on') return;
+  if(!peer) setStatus('on', '已连线 · 等 TA 打开');
+  else if(Date.now() - peerTs < 45000) setStatus('on', '已连线 · TA 在线');
+  else setStatus('warn', '已连线 · TA 暂时离线');
+}
+
+function showHint(){
+  var h = $('hint');
+  h.style.display = 'block';
+  h.innerHTML =
+    '<b>实时通道连不上。</b>你填的内容都已经存在这台设备上，不会丢。' +
+    '可以点上面的「复制我的答案」把勾好的项目发给对方，两边对照着看；' +
+    '或者过一两分钟刷新页面再试一次。';
+}
+function hideHint(){ $('hint').style.display = 'none'; }
+
+/* ================= 事件 ================= */
+
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(t && t.classList && t.classList.contains('box')){
+    var i = +t.dataset.i;
+    me.ans[i] = me.ans[i] ? 0 : 1;
+    saveLocal();
+    paintBoxes();
+    paintResult();
+    schedulePublish();
+  }
+});
+
+['name','height','age'].forEach(function(k){
+  var el = $('me-' + k);
+  el.value = me[k] || '';
+  el.addEventListener('input', function(){
+    me[k] = el.value;
+    saveLocal();
+    schedulePublish();
+  });
+});
+
+askInputs.forEach(function(el, i){
+  if(!el) return;
+  el.value = me.asks[i] || '';
+  el.addEventListener('input', function(){
+    me.asks[i] = el.value;
+    saveLocal();
+    schedulePublish();
+  });
+});
+
+$('btnLink').addEventListener('click', function(){
+  var url = location.origin + location.pathname + '#r=' + room;
+  copyText(url).then(function(){
+    toast('邀请链接已复制，发给 TA 就行');
+  }).catch(function(){
+    showText('邀请链接', url);
+  });
+});
+
+$('btnCopy').addEventListener('click', function(){
+  var lines = [], lastSec = -1;
+  for(var i=0;i<N;i++){
+    if(!me.ans[i]) continue;
+    if(ITEMS[i].sec !== lastSec){
+      lastSec = ITEMS[i].sec;
+      lines.push('');
+      lines.push('【' + SECTIONS[lastSec].title + '】');
+    }
+    lines.push('· ' + ITEMS[i].text);
+  }
+  var extra = [];
+  ASKS.forEach(function(q, i){
+    if(me.asks[i]) extra.push(q + ' ' + me.asks[i]);
+  });
+  var name = me.name ? me.name : '我';
+  var txt = '游乐园 ♥ 调查表 —— ' + name + ' 的答案\n' + lines.join('\n') +
+            (extra.length ? '\n\n' + extra.join('\n') : '');
+  copyText(txt.trim()).then(function(){
+    toast('我的答案已复制');
+  }).catch(function(){
+    showText('你的答案', txt.trim());
+  });
+});
+
+$('btnClear').addEventListener('click', function(){
+  if(!confirm('清空你勾的所有项目？TA 那边的记录不受影响。')) return;
+  me.ans = new Array(N).fill(0);
+  saveLocal();
+  paintBoxes();
+  paintResult();
+  schedulePublish();
+});
+
+window.addEventListener('hashchange', function(){
+  var m = (location.hash || '').match(/r=([a-z0-9]{4,12})/i);
+  if(m && m[1].toLowerCase() !== room) location.reload();
+});
+
+/* ================= 启动 ================= */
+
+paintAll();
+paintPresence();
+presenceTimer = setInterval(paintPresence, 4000);
+
+if(location.protocol === 'file:'){
+  setStatus('warn', '本地打开，只有你自己能看到');
+  var h = $('hint');
+  h.style.display = 'block';
+  h.innerHTML = '<b>这是本地文件。</b>填是能填，但两个人在线同步要把它挂到网上（GitHub Pages 免费）。' +
+                '部署好之后，把带房间号的链接发给对方，两边就能同时填。';
+} else {
+  connectNext();
+}
+
+})();
+</script>
+</body>
+</html>
