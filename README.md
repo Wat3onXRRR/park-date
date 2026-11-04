@@ -1,5 +1,7 @@
 # 游乐园 ♥ 调查表
 
+线上地址：**https://wat3onxrniu.github.io/park-date/**
+
 两个人各开一个页面，勾各自那一栏，实时对在一起看。
 
 ## 怎么用
