@@ -266,6 +266,31 @@
   .hitlist .none{color:#b0b0b0;border-style:dashed}
   .sub{font-size:12px;color:#9a9a9a;margin:14px 0 7px;letter-spacing:.1em}
 
+  .sharebtns{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .sharebtn{
+    flex:1 1 140px;height:46px;border-radius:99px;cursor:pointer;
+    border:1.5px solid #4a4a4a;background:#fff;color:#3f3f3f;
+    font:inherit;font-size:14px;letter-spacing:.08em;
+    transition:.18s;
+  }
+  .sharebtn:hover{background:#f2f2f2}
+  .sharebtn.primary{background:#3f3f3f;color:#fff;border-color:#3f3f3f}
+  .sharebtn.primary:hover{background:#232323}
+
+  .imgwrap{
+    position:fixed;inset:0;background:rgba(20,20,20,.86);z-index:120;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .imgwrap img{max-width:100%;max-height:88vh;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .imgwrap .close{
+    position:fixed;top:16px;right:20px;width:40px;height:40px;border-radius:50%;
+    border:none;background:#fff;color:#333;font-size:20px;cursor:pointer;
+  }
+  .imgwrap .tip{
+    position:fixed;top:22px;left:0;right:0;text-align:center;color:#fff;font-size:13px;
+    letter-spacing:.1em;font-family:system-ui,"PingFang SC",sans-serif;
+  }
+
   @media (max-width:520px){
     .stats{grid-template-columns:repeat(2,1fr)}
   }
@@ -348,6 +373,11 @@
     <div class="hitlist" id="hitBoth"><span class="none">还没有重合的项目</span></div>
     <div class="sub">只有 TA 勾了</div>
     <div class="hitlist peer" id="hitPeer"><span class="none">TA 还没开始填</span></div>
+
+    <div class="sharebtns">
+      <button class="sharebtn primary" id="btnShare">生成分享图</button>
+      <button class="sharebtn" id="btnShareLink">复制结果文字</button>
+    </div>
   </div>
 
   <div class="foot">Amusement Park Date · 两个人各自打开，勾自己那一栏</div>
@@ -661,6 +691,7 @@ MqttClient.prototype.feed = function(chunk){
 var BROKERS = [
   'wss://broker.emqx.io:8084/mqtt',
   'wss://broker.hivemq.com:8884/mqtt',
+  'wss://mqtt.eclipseprojects.io:443/mqtt',
   'wss://test.mosquitto.org:8081/mqtt'
 ];
 var TOPIC_ROOT = 'datecheck/apark/v1/';
@@ -676,10 +707,18 @@ function makeRoom(){
   return s;
 }
 
-/* 身份：同一台设备固定一个 id；带 ?as=xxx 可以换身份（一台电脑上模拟两个人） */
+/* 身份：一个浏览器标签页算一个人。带 ?as=xxx 可以指定身份（调试用）
+   用 sessionStorage 而不是 localStorage，是为了同一台电脑开两个窗口也能互相看见 */
 var urlId = (location.search.match(/[?&]as=([a-z0-9]{4,16})/i) || [])[1];
-var myId = urlId ? urlId.toLowerCase() : localStorage.getItem('apark-id');
-if(!myId){ myId = makeId(); localStorage.setItem('apark-id', myId); }
+var myId = urlId ? urlId.toLowerCase() : (function(){
+  var s = null;
+  try { s = sessionStorage.getItem('apark-id'); } catch(e){}
+  if(!s){
+    s = makeId();
+    try { sessionStorage.setItem('apark-id', s); } catch(e){}
+  }
+  return s;
+})();
 
 var room = (function(){
   var m = (location.hash || '').match(/r=([a-z0-9]{4,12})/i);
@@ -690,7 +729,7 @@ var room = (function(){
   return r;
 })();
 
-var STORE_KEY = 'apark:' + room + ':' + myId;
+var STORE_KEY = 'apark:' + room;
 
 var me = {
   name:'', height:'', age:'',
@@ -883,10 +922,16 @@ function setStatus(kind, text){
 function connectNext(){
   if(brokerIdx >= BROKERS.length){
     linkState = 'failed';
-    setStatus('bad', '连不上实时服务器，填的内容仍在本地保存');
+    setStatus('bad', '连不上实时服务器，20 秒后重试');
     showHint();
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(function(){
+      brokerIdx = 0;
+      connectNext();
+    }, 20000);
     return;
   }
+  if(retryTimer){ clearTimeout(retryTimer); retryTimer = 0; }
   var url = BROKERS[brokerIdx];
   var c = new MqttClient(url, myId);
   var settled = false;
@@ -940,7 +985,7 @@ function connectNext(){
   c.open();
 }
 
-var hbTimer = 0, presenceTimer = 0;
+var hbTimer = 0, presenceTimer = 0, retryTimer = 0;
 
 function paintPresence(){
   if(linkState !== 'on') return;
@@ -953,9 +998,9 @@ function showHint(){
   var h = $('hint');
   h.style.display = 'block';
   h.innerHTML =
-    '<b>实时通道连不上。</b>你填的内容都已经存在这台设备上，不会丢。' +
-    '可以点上面的「复制我的答案」把勾好的项目发给对方，两边对照着看；' +
-    '或者过一两分钟刷新页面再试一次。';
+    '<b>实时通道暂时连不上。</b>两台设备不需要连同一个 Wi-Fi，各上各的网就行，走的是公网服务器。' +
+    '页面每 20 秒会自动重连一次，连上之后会自动补发你勾过的内容，不用刷新。' +
+    '要是等了半天还是这样，八成是这边网络把 WebSocket 挡住了，可以点上面的「复制我的答案」先把结果发给对方。';
 }
 function hideHint(){ $('hint').style.display = 'none'; }
 
@@ -1039,6 +1084,346 @@ $('btnClear').addEventListener('click', function(){
 window.addEventListener('hashchange', function(){
   var m = (location.hash || '').match(/r=([a-z0-9]{4,12})/i);
   if(m && m[1].toLowerCase() !== room) location.reload();
+});
+
+/* ================= 分享图 ================= */
+
+var PF = { W:540, S:2, pad:34, ink:'#3a3a3a', sub:'#8e8e8e', faint:'#cfcfcf',
+           rose:'#c06a83', deep:'#a83f5b', line:'#e2e2e2' };
+var SANS  = '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif';
+var SERIF = '"Songti SC","STSong","SimSun",Georgia,serif';
+
+function px(c, size, bold, fam){ c.font = (bold ? '700 ' : '400 ') + size + 'px ' + (fam || SANS); }
+function rrect(c, x, y, w, h, r){
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+function wrapPx(c, text, maxW){
+  var out = [], cur = '';
+  for(var i = 0; i < text.length; i++){
+    var ch = text.charAt(i);
+    if(cur && c.measureText(cur + ch).width > maxW){ out.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if(cur) out.push(cur);
+  return out;
+}
+function textSpaced(c, t, cx, y, sp, align){
+  var ws = [], total = 0, i;
+  for(i = 0; i < t.length; i++){ var w = c.measureText(t.charAt(i)).width; ws.push(w); total += w + sp; }
+  total -= sp;
+  var x = align === 'left' ? cx : (align === 'right' ? cx - total : cx - total / 2);
+  c.textAlign = 'left';
+  for(i = 0; i < t.length; i++){ c.fillText(t.charAt(i), x, y); x += ws[i] + sp; }
+}
+function tick(c, x, y, on, who){
+  var s = 13, r = 2.6;
+  rrect(c, x, y, s, s, r);
+  if(!on){
+    c.lineWidth = 1.5; c.strokeStyle = '#b8b8b8'; c.stroke();
+    return;
+  }
+  c.fillStyle = who === 'peer' ? PF.rose : PF.ink;
+  c.fill();
+  if(who === 'both'){
+    c.beginPath(); c.moveTo(x + s, y); c.lineTo(x + s, y + s); c.lineTo(x, y + s);
+    c.closePath(); c.fillStyle = PF.rose; c.fill();
+  }
+}
+
+function buildPosterCanvas(){
+  var W = PF.W, pad = PF.pad, colW = 230, gap = 12;
+  var colX = [pad, pad + colW + gap];
+  var cw = W - pad * 2;
+
+  var canvas = document.createElement('canvas');
+  canvas.width = W * PF.S; canvas.height = 3400 * PF.S;
+  var c = canvas.getContext('2d');
+  c.scale(PF.S, PF.S);
+  c.textBaseline = 'top';
+  c.fillStyle = '#fff';
+  c.fillRect(0, 0, W, 3400);
+
+  var meas = document.createElement('canvas').getContext('2d');
+
+  /* --- 两栏的行 --- */
+  function buildCol(side){
+    var rows = [], last = -1;
+    for(var i = 0; i < N; i++){
+      var si = ITEMS[i].sec;
+      if(SECTIONS[si].side !== side) continue;
+      if(si !== last){ last = si; rows.push({t:'sec', txt:SECTIONS[si].title}); }
+      rows.push({t:'item', txt:ITEMS[i].text, i:i});
+    }
+    return rows;
+  }
+  var cols = [buildCol('l'), buildCol('r')];
+  var boxW = 13, boxGap = 5, txtW = colW - (boxW * 2 + boxGap) - 12, LH = 16.5;
+  cols.forEach(function(rows){
+    rows.forEach(function(r){
+      if(r.t === 'sec'){ r.lines = [r.txt]; r.h = 31; return; }
+      px(meas, 12, 0);
+      r.lines = wrapPx(meas, r.txt, txtW);
+      r.h = r.lines.length * LH + 6.5;
+    });
+  });
+
+  var y = pad + 4;
+
+  /* --- 页眉 --- */
+  px(c, 10.5, 1, SANS); c.fillStyle = PF.sub;
+  textSpaced(c, 'AMUSEMENT PARK DATE', W / 2, y, 2.6); y += 20;
+
+  px(c, 29, 1, SERIF); c.fillStyle = PF.ink;
+  textSpaced(c, '游乐园', W / 2 - 26, y, 3, 'right');
+  c.fillStyle = PF.rose;
+  textSpaced(c, '♥', W / 2, y + 1, 0);
+  c.fillStyle = PF.ink;
+  textSpaced(c, '调查表', W / 2 + 26, y, 3, 'left');
+  y += 40;
+
+  px(c, 9, 1, SANS); c.fillStyle = PF.faint;
+  textSpaced(c, 'RELATIONSHIP CHECKLIST', W / 2, y, 3.2); y += 26;
+
+  /* --- 两个人 --- */
+  var nmMe = (me.name && me.name.trim()) ? me.name.trim() : '你';
+  var nmPeer = (peer && peer.name && peer.name.trim()) ? peer.name.trim() : (peer ? 'TA' : '还没填');
+  function tag(x, label, name, color, alignRight){
+    px(c, 9.5, 1, SANS);
+    var tw = c.measureText(label).width + 12;
+    px(c, 12.5, 1, SANS);
+    var nw = Math.min(c.measureText(name).width, 92);
+    var total = tw + 8 + nw;
+    var sx = alignRight ? x - total : x;
+    px(c, 9.5, 1, SANS);
+    c.fillStyle = color;
+    rrect(c, sx, y, tw, 17, 8.5); c.fill();
+    c.fillStyle = '#fff'; c.textAlign = 'center';
+    c.fillText(label, sx + tw / 2, y + 4.5);
+    c.textAlign = 'left';
+    px(c, 12.5, 1, SANS);
+    c.fillStyle = color === PF.ink ? PF.ink : PF.deep;
+    var nm = name;
+    while(nm.length > 1 && c.measureText(nm).width > 92) nm = nm.slice(0, -1);
+    c.fillText(nm, sx + tw + 8, y + 1.5);
+  }
+  tag(W / 2 - 14, '你', nmMe, PF.ink, true);
+  tag(W / 2 + 14, 'TA', nmPeer, PF.rose, false);
+  y += 34;
+
+  /* --- 统计四格 --- */
+  var s = stats();
+  var union = s.both + s.me + s.peer;
+  var ratio = union ? Math.round(s.both / union * 100) : 0;
+  var cells = [
+    ['两个人都勾了', s.both, PF.deep],
+    ['只有你', s.me, PF.ink],
+    ['只有 TA', s.peer, PF.rose],
+    ['谁都没勾', s.none, '#b5b5b5']
+  ];
+  var bw = (cw - 3 * 8) / 4, bh = 62;
+  cells.forEach(function(cell, k){
+    var bx = pad + k * (bw + 8);
+    rrect(c, bx, y, bw, bh, 8);
+    c.fillStyle = '#fafafa'; c.fill();
+    c.lineWidth = 1.2; c.strokeStyle = '#e0e0e0'; c.stroke();
+    px(c, 21, 1, SERIF); c.fillStyle = cell[2]; c.textAlign = 'center';
+    c.fillText(String(cell[1]), bx + bw / 2, y + 12);
+    px(c, 9, 0, SANS); c.fillStyle = PF.sub;
+    c.fillText(cell[0], bx + bw / 2, y + 42);
+    c.textAlign = 'left';
+  });
+  y += bh + 18;
+
+  /* --- 默契度 --- */
+  px(c, 11, 0, SANS); c.fillStyle = PF.sub;
+  c.fillText('默契度', pad, y + 4);
+  px(c, 30, 1, SERIF); c.fillStyle = PF.deep; c.textAlign = 'right';
+  c.fillText(ratio + '%', pad + cw, y - 6);
+  c.textAlign = 'left';
+  y += 34;
+  var trW = cw, segs = [
+    [s.both, PF.deep], [s.me, '#6f6f6f'], [s.peer, '#e6b3c1']
+  ];
+  c.fillStyle = '#eaeaea';
+  rrect(c, pad, y, trW, 8, 4); c.fill();
+  var sx2 = pad;
+  segs.forEach(function(sg){
+    if(!sg[0]) return;
+    var w = sg[0] / N * trW;
+    c.save();
+    rrect(c, pad, y, trW, 8, 4); c.clip();
+    c.fillStyle = sg[1]; c.fillRect(sx2, y, w, 8);
+    c.restore();
+    sx2 += w;
+  });
+  y += 30;
+
+  /* --- 清单 --- */
+  var listTop = y, maxColH = 0;
+  cols.forEach(function(rows, ci){
+    var x = colX[ci], cy = listTop;
+    rows.forEach(function(r){
+      if(r.t === 'sec'){
+        c.fillStyle = PF.ink;
+        c.beginPath(); c.arc(x + 2.5, cy + 8.5, 1.8, 0, 6.3); c.fill();
+        px(c, 11, 1, SANS); c.fillStyle = PF.ink;
+        textSpaced(c, r.txt, x + 10, cy + 2, 1.4, 'left');
+        cy += r.h;
+        return;
+      }
+      px(c, 12, 0, SANS); c.fillStyle = '#5c5c5c';
+      for(var L = 0; L < r.lines.length; L++){
+        c.fillText(r.lines[L], x, cy + 1 + L * LH);
+      }
+      var m = !!me.ans[r.i], p = !!peerAns(r.i);
+      var bx = x + colW - (boxW * 2 + boxGap);
+      if(m && p) tick(c, bx, cy + 2, true, 'both');
+      else tick(c, bx, cy + 2, m, 'me');
+      tick(c, bx + boxW + boxGap, cy + 2, p, 'peer');
+      cy += r.h;
+    });
+    if(cy - listTop > maxColH) maxColH = cy - listTop;
+  });
+  y = listTop + maxColH + 24;
+
+  /* --- 四问 --- */
+  px(c, 10.5, 1, SANS); c.fillStyle = PF.faint;
+  textSpaced(c, 'FINALLY', pad, y, 3, 'left');
+  y += 22;
+  ASKS.forEach(function(q, k){
+    px(c, 12, 1, SANS); c.fillStyle = PF.ink;
+    var ql = wrapPx(c, q, cw);
+    ql.forEach(function(line, li){ c.fillText(line, pad, y + li * 17); });
+    y += ql.length * 17 + 3;
+
+    function pair(label, val, color){
+      if(!val || !val.trim()) return 0;
+      px(c, 11.5, 0, SANS);
+      var pre = label + '  ';
+      var pw = c.measureText(pre).width;
+      var ls = wrapPx(c, val.trim(), cw - pw - 2);
+      for(var li2 = 0; li2 < ls.length; li2++){
+        if(li2 === 0){ px(c, 10.5, 1, SANS); c.fillStyle = color; c.fillText(label, pad, y + 2); }
+        px(c, 11.5, 0, SANS); c.fillStyle = '#5c5c5c';
+        c.fillText(ls[li2], pad + pw, y);
+        y += 16.5;
+      }
+      y += 2;
+      return ls.length;
+    }
+    var a1 = me.asks[k] || '';
+    var a2 = (peer && peer.asks && peer.asks[k]) ? peer.asks[k] : '';
+    pair('你', a1, PF.ink);
+    pair('TA', a2, PF.rose);
+    if(!a1 && !a2){
+      px(c, 11, 0, SANS); c.fillStyle = '#bdbdbd';
+      c.fillText('（还没填）', pad, y);
+      y += 16.5;
+    }
+    y += 10;
+  });
+
+  /* --- 页脚 --- */
+  y += 6;
+  c.strokeStyle = PF.line; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(pad, y); c.lineTo(W - pad, y); c.stroke();
+  y += 14;
+  px(c, 9.5, 0, SANS); c.fillStyle = PF.sub;
+  var d = new Date();
+  var ds = d.getFullYear() + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + ('0' + d.getDate()).slice(-2);
+  var site = location.protocol === 'file:' ? '游乐园 ♥ 调查表' : location.host + location.pathname;
+  c.fillText(site, pad, y);
+  c.textAlign = 'right';
+  c.fillText(ds, W - pad, y);
+  c.textAlign = 'left';
+  y += 24;
+
+  /* --- 裁掉多余的空白 --- */
+  var usedH = Math.ceil(y + pad);
+  var out = document.createElement('canvas');
+  out.width = W * PF.S; out.height = usedH * PF.S;
+  var oc = out.getContext('2d');
+  oc.fillStyle = '#fff'; oc.fillRect(0, 0, out.width, out.height);
+  oc.drawImage(canvas, 0, 0, out.width, out.height, 0, 0, out.width, out.height);
+  return out;
+}
+
+function showImage(url){
+  var wrap = document.createElement('div');
+  wrap.className = 'imgwrap';
+  var tip = document.createElement('div');
+  tip.className = 'tip';
+  tip.textContent = '长按或右键保存这张图';
+  var img = document.createElement('img');
+  img.src = url;
+  var btn = document.createElement('button');
+  btn.className = 'close';
+  btn.textContent = '×';
+  btn.onclick = function(){ document.body.removeChild(wrap); };
+  wrap.appendChild(tip); wrap.appendChild(img); wrap.appendChild(btn);
+  wrap.addEventListener('click', function(e){ if(e.target === wrap) document.body.removeChild(wrap); });
+  document.body.appendChild(wrap);
+}
+
+function savePoster(){
+  var cv = buildPosterCanvas();
+  var url = cv.toDataURL('image/png');
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS){ showImage(url); return; }
+  var d = new Date();
+  var name = '游乐园调查表-' + d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2) + '.png';
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); }, 100);
+  toast('分享图已生成，正在下载');
+}
+
+function resultText(){
+  var s = stats();
+  var union = s.both + s.me + s.peer;
+  var ratio = union ? Math.round(s.both / union * 100) : 0;
+  var nmMe = (me.name && me.name.trim()) ? me.name.trim() : '你';
+  var nmPeer = (peer && peer.name && peer.name.trim()) ? peer.name.trim() : 'TA';
+  var L = [];
+  L.push('游乐园 ♥ 调查表 · 两个人的对照');
+  L.push(nmMe + ' / ' + nmPeer + ' · 默契度 ' + ratio + '%');
+  L.push('两个人都勾了 ' + s.both + ' 项，只有你 ' + s.me + ' 项，只有 TA ' + s.peer + ' 项');
+  var both = [], op = [];
+  for(var i = 0; i < N; i++){
+    var m = !!me.ans[i], p = !!peerAns(i);
+    if(m && p) both.push(ITEMS[i].text);
+    else if(p) op.push(ITEMS[i].text);
+  }
+  if(both.length){ L.push(''); L.push('【都勾了】'); both.forEach(function(t){ L.push('· ' + t); }); }
+  if(op.length){ L.push(''); L.push('【只有 TA】'); op.forEach(function(t){ L.push('· ' + t); }); }
+  var qa = [];
+  ASKS.forEach(function(q, i){
+    var a = me.asks[i] || '', b = (peer && peer.asks && peer.asks[i]) ? peer.asks[i] : '';
+    if(a || b) qa.push(q + '\n  ' + nmMe + '：' + (a || '—') + '\n  ' + nmPeer + '：' + (b || '—'));
+  });
+  if(qa.length){ L.push(''); L.push(qa.join('\n')); }
+  return L.join('\n');
+}
+
+$('btnShare').addEventListener('click', function(){
+  try { savePoster(); }
+  catch(err){ toast('生成失败：' + err.message); }
+});
+
+$('btnShareLink').addEventListener('click', function(){
+  var txt = resultText();
+  copyText(txt).then(function(){
+    toast('结果文字已复制');
+  }).catch(function(){
+    showText('结果', txt);
+  });
 });
 
 /* ================= 启动 ================= */
